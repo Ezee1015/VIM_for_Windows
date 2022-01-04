@@ -8,7 +8,7 @@ mkdir "C:%homepath%\vimfiles\after"
 mkdir "C:%homepath%\vimfiles\after\plugin"
 mkdir "C:%homepath%\vimfiles\autoload"
 
-powershell "& ""C:\Users\Downloads\VIM_for_Windows\PlugVim.ps1"" "
+powershell " powershell $(cat C:%homepath%\Downloads\VIM_for_Windows-main\PlugVim.ps1)"
 
      :: @REM mkdir "C:%homepath%/.vim/undodir"
      :: @REM mkdir "C:%homepath%/.vim/after"
