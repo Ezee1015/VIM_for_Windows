@@ -21,3 +21,4 @@ echo "autocmd StdinReadPre * let s:std_in=1" > C:%homepath%\vimfiles\after\plugi
 echo "autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | silent NERDTree | endif" >> C:%homepath%\vimfiles\after\plugin\NERDTreeAutoExecute.vim
 
 echo "Si no funnciona ejecutar un set shell=cmd luego un PlugUpgrade y luego un PlugUpdate" > "C:%homepath%/Desktop/LEEME.txt"
+     :: @REM https://github.com/junegunn/vim-plug/issues/326
