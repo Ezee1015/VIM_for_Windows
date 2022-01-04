@@ -1,5 +1,7 @@
 @echo off
 gvim82.exe
+Git-2.34.1-64-bit.exe
+node-v16.13.1-x86.msi
 
 mkdir "C:%homepath%\vimfiles\undodir"
 mkdir "C:%homepath%\vimfiles\after"
@@ -14,7 +16,6 @@ PlugVim.ps1
 
 move "vimrc" "C:%homepath%\.vimrc"
 move colors\* "C:%homepath%\vimfiles\colors\"
-:: move plug.vim "C:%homepath%\vimfiles\autoload\plug.vim"
 
 echo "autocmd StdinReadPre * let s:std_in=1" > C:%homepath%\vimfiles\after\plugin\NERDTreeAutoExecute.vim
 echo "autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | silent NERDTree | endif" >> C:%homepath%\vimfiles\after\plugin\NERDTreeAutoExecute.vim

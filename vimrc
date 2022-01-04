@@ -5,9 +5,10 @@ set showcmd
 set encoding=UTF-8
 set wildmode=longest,list,full ""Autocompleta Rutas
 set ic ""Ignora la Capitalizacion de las letras en la busqueda
+set updatetime=300 "" Tiempo de actualizacion de CoC
 
 set undofile " UnDo persistente, aun cerrando el programa
-set undodir=~/.vim/undodir
+set undodir=~\vimfiles\undodir
 
 " Cierre la pestaña si NERDTree es la única ventana que queda en VIM.
 autocmd BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
@@ -80,12 +81,13 @@ endif
         augroup END
 
 
-
-"""""" SELECT BETWEEN DIFERENTS LANGUAJES
+"""""" SELECT BETWEEN DIFERENTS COLOSCHEMES
 " colorscheme dracula
 colorscheme gruvbox
 "colorscheme onedark
 "colorscheme molokai
+"colorscheme ghdark
+"colorscheme GruberDarker
 
 set bg=dark
 
@@ -100,7 +102,7 @@ let g:vim_bootstrap_theme = "gruvbox"
 "*****************************************************************************
 "" Vim-Plug core
 "*****************************************************************************
-let vimplug_exists=expand('~/.vim/autoload/plug.vim')
+let vimplug_exists=expand('~\vimfiles\autoload/plug.vim')
 if has('win32')&&!has('win64')
   let curl_exists=expand('C:\Windows\Sysnative\curl.exe')
 else
@@ -125,7 +127,7 @@ if !filereadable(vimplug_exists)
 endif
 
 " Required:
-call plug#begin(expand('~/.vim/plugged'))
+call plug#begin(expand('~/vimfiles/plugged'))
 
 "*****************************************************************************
 "" Plug install packages
@@ -152,7 +154,7 @@ Plug 'easymotion/vim-easymotion'                   " MOVERSE MÁS RAPIDO POR VIM
 Plug 'Xuyuanp/nerdtree-git-plugin'                 " ASTERISCOS EN NERDTREE CON GIT. no logré que funcione
 Plug 'tiagofumo/vim-nerdtree-syntax-highlight'     " ICONOS DE LOS ARCHIVOS
 Plug 'ryanoasis/vim-devicons'                      " ICONOS PARA NERDTREE SINTAX HIGHLIGHT
-
+Plug 'neoclide/coc.nvim', {'branch': 'release'}    " SERVIDOR DE AUTOCOMPLETADO. Ver: https://github.com/neoclide/coc.nvim/wiki/Using-coc-extensions
 " if has('nvim') || has('patch-8.0.902')
 "   Plug 'mhinz/vim-signify'                         " CONTROL DE VERSIONES DE UN ARCHIVO. CREO QUE NO FUNCIONA, por eso lo comento
 " else
@@ -251,7 +253,7 @@ else
 endif
 
 " session management
-let g:session_directory = "~/.vim/session"
+let g:session_directory = "~/vimfiles/session"
 let g:session_autoload = "no"
 let g:session_autosave = "no"
 let g:session_command_aliases = 1
@@ -455,7 +457,10 @@ nnoremap <silent><C-Down> <C-w>j
 "" Window Size (E)
 nmap <silent><S-k> :res -2<CR>
 
-    map <silent><Leader>gj :join<CR> " Cambia el <S-j> a gj. Resuelve el conflicto
+ " Cambia el <S-j> a gj. Resuelve el conflicto
+    map <silent><Leader>gj :join<CR>
+        " No me acuerdo que funcion cumple, por eso lo comento
+        " nnoremap <leader>gr mz<leader>gj'z
     map <silent><Leader>g<S-j> :join!<CR>
     map <silent><Leader>gq g~
 
@@ -476,12 +481,19 @@ map <silent><Leader><S-m> gU
 map ++ <C-a>
 map -- <C-x>
 
+"" Funciones de CoC
+map gd <Plug>(coc-definition)
+
+"" Agrega Funciones en Modo Insertar (E)
+imap ddd <C-o>d
+imap yyy <C-o>y
+
 "" Atajo Sustituir (E)
 nmap S :%s//g<Left><Left>
 
 "" Autocorrector de texto
-nmap <Leader>o :setlocal spell! spelllang=es_es<CR>
-nmap <Leader><S-o> :setlocal spell!
+nmap <Leader>o :setlocal spell! spelllang=es_es<CR>:colorscheme GruberDarker<CR>
+nmap <Leader><S-o> :setlocal spell!<CR>:colorscheme gruvbox<CR>
 
 ""Lista de Cambios en un Archivo (E)
 nmap <Leader>d :DiffSaved<CR>
@@ -498,7 +510,7 @@ com! DiffSaved call s:DiffWithSaved()
 
 " Autopersonalizacion de la Laptop (E)
 " if (bufname()==".vimrc")
-"     " nmap ++ gg/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc:wq<CR>
+"     nmap ++ gg/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc/" M2017<CR>d$gcc:wq<CR>
 "     nmap ++ gg/" M2017<CR>d$gcc:wq<CR>
 " endif
 
@@ -512,6 +524,7 @@ map r- <Plug>(ale_previous_wrap)
 "" Compile (E)
 " map <leader>cj /public class<CR>02wyw:!javac <C-R>".java && java <C-R>" <CR>
 map <Leader>cc :call CompileAndRun()<CR>
+map <Leader>c :call Compile()<CR>
 
 " func! CompileRunGcc()
 "   exec "w"
@@ -564,6 +577,22 @@ func! CompileAndRun()
 endfunc
 
 
+func! Compile()
+    exec "w"
+    if &filetype == 'c'
+        exec "echo expand('%:p:h') | terminal gcc % -o %<"
+    elseif &filetype == 'cpp'
+        exec "echo expand('%:p:h') | terminal g++ % -o %<"
+        exec "normal gg"
+    elseif &filetype == 'java'
+        exec "echo expand('%:p:h') | terminal javac %"
+        exec "normal gg"
+    elseif &filetype == 'rust'
+        exec "echo expand('%:p:h') | terminal cargo build --manifest-path=%:p:h:h/Cargo.toml"
+    elseif &filetype == 'go'
+        exec "echo expand('%:p:h') | terminal go build '%<'"
+    endif
+endfunc
 
 "" Git
 noremap <Leader>ga :Git write<CR>
@@ -583,8 +612,17 @@ nnoremap <leader>sc :CloseSession<CR>
 
 "" Tabs
 nnoremap <silent><Tab> gt
+    "" Modifica la posicion del cursor hacia la anterior posición
+    map ca g;
+    "" Modifica la posicion del cursor hacia la siguiente posición
+    map cd g,
 nnoremap <silent><S-Tab> gT
 nnoremap <silent> <S-t> :tabnew<CR>:NERDTreeToggle<CR>
+
+nnoremap <silent><Leader>bn :bnext<CR>
+nnoremap <silent><Leader>bv :bprev<CR>
+nnoremap <silent><Leader>bb :enew<CR>:NERDTreeToggle<CR>
+nnoremap <silent><Leader>bc :bd<CR>
 
 "" Set working directory
 nnoremap <leader>. :lcd %:p:h<CR>
@@ -594,6 +632,13 @@ noremap <Leader>e :e <C-R>=expand("%:p:h") . "/" <CR>
 
 "" Opens a tab edit command with the path of the currently edited file filled
 noremap <Leader>te :tabe <C-R>=expand("%:p:h") . "/" <CR>
+
+"" Remapea para poder subir o bajar un bloque de texto
+vmap <S-j> :m '>+1<CR>gv=gv
+vmap <S-k> :m '<-2<CR>gv=gv
+
+"" Remapea el Shift-Y para que copie hasta el final y no toda la linea
+nnoremap <S-y> y$
 
 "" fzf.vim
 set wildmode=list:longest,list:full
@@ -615,7 +660,9 @@ endif
 
 cnoremap <C-P> <C-R>=expand("%:p:h") . "/" <CR>
 nnoremap <silent> <leader>b :Buffers<CR>
-nnoremap <silent> <leader>e :FZF -m<CR>
+nnoremap <silent> <leader>e :Files<CR>
+nnoremap <silent> <leader>z :FZF -m<CR>
+
 "Recovery commands from history through FZF
 nmap <leader>y :History:<CR>
 
@@ -660,7 +707,7 @@ endif
 " noremap <leader>w :bn<CR>
 
 "" Close buffer
-noremap <leader>c :bd<CR>
+" noremap <leader>c :bd<CR>
 
 "" Clean search (highlight)
 nnoremap <silent> <leader><space> :noh<cr>
@@ -681,6 +728,22 @@ vnoremap K :m '<-2<CR>gv=gv
 
 "" Open current line on GitHub
 " nnoremap <Leader>o :.Gbrowse<CR>
+
+""CoC
+
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
 
 "*****************************************************************************
 "" Custom configs
