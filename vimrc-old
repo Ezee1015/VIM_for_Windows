@@ -88,7 +88,6 @@ colorscheme gruvbox
 "colorscheme molokai
 "colorscheme ghdark
 "colorscheme GruberDarker
-"colorscheme PaperColor
 
 set bg=dark
 
@@ -96,9 +95,6 @@ set bg=dark
 let g:vim_bootstrap_theme = "gruvbox"
 "let g:vim_bootstrap_theme = "onedark"
 "let g:vim_bootstrap_theme = "molokai"
-
-let g:airline_theme = 'powerlineish'
-let g:airline_theme = 'base16_gruvbox_dark_hard'
 
 " set updatetime=1000 " FRECUENCIA DE ACTUALIZACION DE vim-signify
 
@@ -338,7 +334,7 @@ if exists("*fugitive#statusline")
 endif
 
 " vim-airline
-" let g:airline_theme = 'powerlineish'
+let g:airline_theme = 'powerlineish'
 let g:airline#extensions#branch#enabled = 1
 let g:airline#extensions#ale#enabled = 1
 let g:airline#extensions#tabline#enabled = 1
@@ -379,7 +375,7 @@ let Grep_Skip_Files = '*.log *.db'
 let Grep_Skip_Dirs = '.git node_modules'
 
 " terminal emulation
-nnoremap <silent> <leader>t :terminal<CR>
+nnoremap <silent> <leader>sh :terminal<CR>
 
 
 "*****************************************************************************
@@ -435,6 +431,7 @@ set autoread
 
 "" Save and Exit (E)
 nmap <silent><Leader>x :wq<CR>
+nmap <silent><Leader>s :w<CR>
 nmap <silent><Leader>º :q!<CR>
 
 nmap <silent><Leader>w :wq<CR>
@@ -449,34 +446,7 @@ noremap <silent><Leader>v :<C-u>vsplit<CR>
 nmap <Leader>f <Plug>(easymotion-s2)
 
 " Remapea ESC a ii para Salir del Modo Insertar (E)
-imap ii <Esc>
-imap II <Esc>
- "" Desactiva el CapsLock Cuando se está en Insert y se pasa a Normal
-     au InsertLeave * call TurnOffCaps()
-     function TurnOffCaps()
-         if has("unix")
-             let capsState = matchstr(system('xset -q'), '00: Caps Lock:\s\+\zs\(on\|off\)\ze')
-             if capsState == 'on'
-                 silent! execute ':!xdotool key Caps_Lock'
-             endif
-         endif
-     endfunction
-     "" ESCAPE <Esc> ES EQUIVALENTE E <C-C>, pero no lo uso en esta funcion
-
-" Agrega una Separación en el Undo (E)
-inoremap , ,<C-g>u
-inoremap . .<C-g>u
-inoremap ! !<C-g>u
-inoremap ? ?<C-g>u
-inoremap " "<C-g>u
-inoremap ; ;<C-g>u
-
-" Agrega La Posicion del cursor en el JumpList de Vim cuando se mueve más de 5
-" lineas
-" nnoremap <expr> k (v:count > 5 ? "m'" . v:count : "") . 'k'
-" nnoremap <expr> j (v:count > 5 ? "m'" . v:count : "") . 'j'
-" nnoremap <expr> <Up> (v:count > 5 ? "m'" . v:count : "") . '<Up>'
-" nnoremap <expr> <Down> (v:count > 5 ? "m'" . v:count : "") . '<Down>'
+:imap ii <Esc>
 
 "" Window Movement (E)
 nnoremap <silent><C-Right> <C-w>l " Objetivo: Saltar entre splits
@@ -512,14 +482,7 @@ map ++ <C-a>
 map -- <C-x>
 
 "" Funciones de CoC
-    ""IR A DONDE SE DECLARO
-" nmap <silent> gd <Plug>(coc-definition) "" LO REEMPLAZE POR UN QUE DIVIDE LA
-                                          "" PANTALLA A LA MITAD PARA MOSTRARLO
-nmap <silent> gd :call CocAction('jumpDefinition', 'vsplit')<CR>
-    ""IR A LA COMPLEMENTACIÓN (en lenguaje c no lo soporta)
-nmap <silent> gi <Plug>(coc-implementation)
-   ""VER UNA LISTA DE LAS UTILIZACIONES DE LA FUNCION
-nmap <silent> gr <Plug>(coc-references)
+map gd <Plug>(coc-definition)
 
 "" Agrega Funciones en Modo Insertar (E)
 imap ddd <C-o>d
@@ -529,7 +492,7 @@ imap yyy <C-o>y
 nmap S :%s//g<Left><Left>
 
 "" Autocorrector de texto
-nmap <Leader>o :setlocal spell! spelllang=es_es,en_us<CR>:colorscheme PaperColor<CR>
+nmap <Leader>o :setlocal spell! spelllang=es_es<CR>:colorscheme GruberDarker<CR>
 nmap <Leader><S-o> :setlocal spell!<CR>:colorscheme gruvbox<CR>
 
 ""Lista de Cambios en un Archivo (E)
@@ -561,7 +524,7 @@ map r- <Plug>(ale_previous_wrap)
 "" Compile (E)
 " map <leader>cj /public class<CR>02wyw:!javac <C-R>".java && java <C-R>" <CR>
 map <Leader>cc :call CompileAndRun()<CR>
-map <Leader>cx :call Compile()<CR>
+map <Leader>c :call Compile()<CR>
 
 " func! CompileRunGcc()
 "   exec "w"
@@ -634,20 +597,18 @@ endfunc
 "" Git
 noremap <Leader>ga :Git write<CR>
 noremap <Leader>gc :Git commit --verbose<CR>
-noremap <Leader>gp :Git push<CR>
+noremap <Leader>gsh :Git push<CR>
 noremap <Leader>gll :Git pull<CR>
-" noremap <Leader>gs :Git status<CR>
-noremap <Leader>gs :G<CR>
+noremap <Leader>gs :Git status<CR>
 noremap <Leader>gb :Git blame<CR>
-noremap <Leader>gdd :Git diff<CR>
-noremap <Leader>gd :Gvdiffsplit<CR>
-" noremap <Leader>gr :GRemove<CR>
+noremap <Leader>gd :Git vdiff<CR>
+noremap <Leader>gr :Git remove<CR>
 
 " session management
-nnoremap <leader>os :OpenSession<Space>
-nnoremap <leader>gss :SaveSession<Space>
-nnoremap <leader>ds :DeleteSession<CR>
-nnoremap <leader>cs :CloseSession<CR>
+nnoremap <leader>so :OpenSession<Space>
+nnoremap <leader>ss :SaveSession<Space>
+nnoremap <leader>sd :DeleteSession<CR>
+nnoremap <leader>sc :CloseSession<CR>
 
 "" Tabs
 nnoremap <silent><Tab> gt
@@ -674,11 +635,9 @@ noremap <Leader>te :tabe <C-R>=expand("%:p:h") . "/" <CR>
 
 "" Remapea para poder subir o bajar un bloque de texto
 vmap <S-j> :m '>+1<CR>gv=gv
-vmap <S-Down> :m '>+1<CR>gv=gv
 vmap <S-k> :m '<-2<CR>gv=gv
-vmap <S-Up> :m '<-2<CR>gv=gv
 
-"" Remapea el Shift-Y para que copie hasta el final y no toda la linea (E)
+"" Remapea el Shift-Y para que copie hasta el final y no toda la linea
 nnoremap <S-y> y$
 
 "" fzf.vim
@@ -762,8 +721,6 @@ noremap <C-h> <C-w>h
 "" Vmap for maintain Visual Mode after shifting > and <
 vmap < <gv
 vmap > >gv
-vmap <S-Right> >gv
-vmap <S-Left> <gv
 
 "" Move visual block
 vnoremap J :m '>+1<CR>gv=gv
@@ -778,9 +735,9 @@ vnoremap K :m '<-2<CR>gv=gv
 " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
 " other plugin before putting this into your config.
 inoremap <silent><expr> <TAB>
-\ pumvisible() ? "\<C-n>" :
-\ <SID>check_back_space() ? "\<TAB>" :
-\ coc#refresh()
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
 function! s:check_back_space() abort
@@ -887,5 +844,5 @@ endif
 "     User is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.
 
 "     Sys is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like 'user', this is only CPU time used by the process. See below for a brief description of kernel mode (also known as 'supervisor' mode) and the system call mechanism.
-set shell=cmd
-set shellcmdflag=/c
+    set shell=cmd
+    set shellcmdflag=/c
