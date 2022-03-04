@@ -283,6 +283,11 @@ if has("gui_running")
     set guifont=Menlo:h12
     set transparency=7
   endif
+  if has("gui_win32")
+    set guifont=Consolas:h10:cANSI
+  endif
+endif
+
 else
   let g:CSApprox_loaded = 1
 
@@ -587,9 +592,7 @@ func! CompileAndRun()
         exec "!clear && cargo build --manifest-path='%':p:h:h/Cargo.toml"
         exec "!time cargo run --manifest-path='%':p:h:h/Cargo.toml"
     elseif &filetype == 'java'
-    "     exec "!clear && javac '%'"
-    "     exec "!clear && time java -cp '%':p:h %:t:r"
-        exec "!clear && javac '%'"
+        exec "!clear && set path='C:\Program Files\Java\jdk1.8.0_111\bin' && javac '%'"
         exec "!clear && java '%<'"
     elseif &filetype == 'sh'
         exec "!clear && time bash '%'"
@@ -622,10 +625,10 @@ func! Compile()
         exec "echo expand('%:p:h') | terminal g++ % -o %<"
         exec "normal gg"
     elseif &filetype == 'java'
-        exec "echo expand('%:p:h') | terminal javac %"
-        exec "normal gg"
+        exec "echo expand('%:p:h') | terminal set path='C:\Program Files\Java\jdk1.8.0_111\bin' && javac %"
+        " exec "normal <CR>gg"
     elseif &filetype == 'rust'
-        exec "echo expand('%:p:h') | terminal cargo build --manifest-path=%:p:h:h/Cargo.toml"
+    exec "echo expand('%:p:h') | terminal cargo build --manifest-path=%:p:h:h/Cargo.toml"
     elseif &filetype == 'go'
         exec "echo expand('%:p:h') | terminal go build '%<'"
     endif
