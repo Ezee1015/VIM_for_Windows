@@ -14,8 +14,8 @@ powershell " powershell $(cat C:%homepath%\Downloads\VIM_for_Windows-main\PlugVi
      :: @REM mkdir "C:%homepath%/.vim/after"
      :: @REM mkdir "C:%homepath%/.vim/after/plugin"
 
-xcopy /E "vimrc" "C:%homepath%\.vimrc"
-copy vimfiles "C:%homepath%\vimfiles"
+copy "vimrc" "C:%homepath%\.vimrc"
+xcopy /E vimfiles "C:%homepath%\vimfiles"
 
 echo "autocmd StdinReadPre * let s:std_in=1" > C:%homepath%\vimfiles\after\plugin\NERDTreeAutoExecute.vim
 echo "autocmd VimEnter * if argc() == 0 && !exists('s:std_in') | silent NERDTree | endif" >> C:%homepath%\vimfiles\after\plugin\NERDTreeAutoExecute.vim
