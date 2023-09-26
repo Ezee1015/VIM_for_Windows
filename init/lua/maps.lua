@@ -1,76 +1,92 @@
--- Map leader to ,
-vim.g.mapleader   = ','
+-- Functional wrapper for mapping custom keybindings
+local function map(modes, lhs, rhs, opts)
+    local options = { noremap = true }
+    if opts then
+        options = vim.tbl_extend("force", options, opts)
+    end
+
+    if type(modes) == "string" then
+        modes = { modes }
+    end
+
+    for _, mode in ipairs(modes) do
+        vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+    end
+end
+
+vim.g.mapleader   = ' '
 
 -- "*****************************************************************************
 -- "" Funciones de los Mappings
 -- "*****************************************************************************
-vim.cmd ([[
-  func! StartifyAtExit()
-    if (tabpagewinnr(tabpagenr(), '$') > 1 )
-      exec ':silent! close!'
-    else
-      exec ':bdelete!'
-    endif
-    if len(getbufinfo({'buflisted':1}))==1 && expand("%")=='' | exec 'Startify'| endif
-  endfunc
-  ]])
+
+local function isBufferEmptyAndNotSaved()
+  local buffer_number = vim.fn.bufnr('%')
+  local is_modified = vim.fn.getbufvar(buffer_number, '&modified')
+
+  if is_modified == 0 then
+    local line_count = vim.fn.line('$')
+    return line_count == 1 and vim.fn.empty(vim.fn.getline(1)) == 1
+  end
+  return false
+end
+
+function StartifyAtExit()
+  -- Si existe una segunda ventana (no solo una)
+  local success, _ = pcall(vim.cmd, 'close!')
+
+  if not success then
+    vim.cmd(':bdelete!')
+
+    if isBufferEmptyAndNotSaved() then
+      vim.cmd(':bdelete!')
+      vim.cmd('Startify')
+    end
+  end
+end
 
 -- Desactiva el CapsLock Cuando se está en Insert y se pasa a Normal (Linux-X11)
 vim.cmd([[
-  au InsertLeave * call TurnOffCaps()
-  function! TurnOffCaps()
-    if has("unix")
-      let capsState = matchstr(system('xset -q'), '00: Caps Lock:\s\+\zs\(on\|off\)\ze')
-      if capsState == 'on'
-        silent! execute ':!xdotool key Caps_Lock'
-      endif
+au InsertLeave * call TurnOffCaps()
+function! TurnOffCaps()
+  if has("unix")
+    let capsState = matchstr(system('xset -q'), '00: Caps Lock:\s\+\zs\(on\|off\)\ze')
+    if capsState == 'on'
+      silent! execute ':!xdotool key Caps_Lock'
     endif
-  endfunction
-  "" ESCAPE <Esc> ES EQUIVALENTE E <C-C>, pero no lo uso en esta funcion
-  ]])
+  endif
+endfunction
+"" ESCAPE <Esc> ES EQUIVALENTE E <C-C>, pero no lo uso en esta funcion
+]])
 
 -- Muestra los cambios realizados en el archivo
 vim.cmd([[
-  function! s:DiffWithSaved()
-    let filetype=&ft
-    diffthis
-    vnew | r # | normal! 1Gdd
-    diffthis
-    exe "setlocal bt=nofile bh=wipe nobl noswf ro ft=" . filetype
-  endfunction
-  com! DiffSaved call s:DiffWithSaved()
-  ]])
+function! s:DiffWithSaved()
+  let filetype=&ft
+  diffthis
+  vnew | r # | normal! 1Gdd
+  diffthis
+  exe "setlocal bt=nofile bh=wipe nobl noswf ro ft=" . filetype
+endfunction
+com! DiffSaved call s:DiffWithSaved()
+]])
 
--- Programa los cambios de zZçÇ a <><> respectivamente y su restablecimiento
+-- Programa los cambios de çÇ a <> respectivamente y su restablecimiento
+local programado = false
 function Programar()
-  map('n', 'ç', '<', { } )
-  map('n', 'Ç', '>', { } )
-  map('i', 'ç', '<', { } )
-  map('i', 'Ç', '>', { } )
-  map('v', 'ç', '<', { } )
-  map('v', 'Ç', '>', { } )
-  map('n', 'z', '<', { } )
-  map('n', 'Z', '>', { } )
-  map('i', 'z', '<', { } )
-  map('i', 'Z', '>', { } )
-  map('v', 'z', '<', { } )
-  map('v', 'Z', '>', { } )
-end
-function DesProgramar()
-  map('n', 'ç', 'ç', { } )
-  map('n', 'Ç', 'Ç', { } )
-  map('i', 'ç', 'ç', { } )
-  map('i', 'Ç', 'Ç', { } )
-  map('v', 'ç', 'ç', { } )
-  map('v', 'Ç', 'Ç', { } )
-  map('n', 'z', 'z', { } )
-  map('n', 'Z', 'Z', { } )
-  map('i', 'z', 'z', { } )
-  map('i', 'Z', 'Z', { } )
-  map('v', 'z', 'z', { } )
-  map('v', 'Z', 'Z', { } )
-end
+  local n1 = 'ç'
+  local n2 = 'Ç'
 
+  if programado then
+    n1 = '<'
+    n2 = '>'
+  end
+
+  programado = not programado
+
+  map({ 'n', 'v', 'x', 's', 'o', 'i', 'l', 'c', 't' }, 'ç', n1, { noremap=true } )
+  map({ 'n', 'v', 'x', 's', 'o', 'i', 'l', 'c', 't' }, 'Ç', n2, { noremap=true } )
+end
 
 -- "*****************************************************************************
 -- "" Mappings
@@ -78,13 +94,17 @@ end
 map('n', 'n'             , 'nzzzv'                           , { noremap= true }               )
 map('n', 'N'             , 'Nzzzv'                           , { noremap= true }               )
 
+-- Elimina en el void
+map('n', '<leader>d'     , '"_d'                             , {}                              )
+map('v', '<leader>d'     , '"_d'                             , {}                              )
+
 -- Abre y cierra folds
-map('n', '<Space>'       , 'za'                              , {}                              )
+-- map('n', '<Space>'       , 'za'                              , {}                              )
 
 -- Save and Exit
-map('n', '<leader>w'     , ':w<CR>:call StartifyAtExit()<CR>', { silent= true }                )
+map('n', '<leader>w'     , ':w<CR>:lua StartifyAtExit()<CR>' , { silent= true }                )
 map('n', '<leader>s'     , ':w<CR>'                          , { silent= true }                )
-map('n', '<leader>q'     , ':call StartifyAtExit()<CR>'      , { silent= true }                )
+map('n', '<leader>q'     , ':lua StartifyAtExit()<CR>'       , { silent= true }                )
 map('n', '<leader>Q'     , ':q!<CR>'                         , { silent= true }                )
 
 -- Split
@@ -96,6 +116,7 @@ map('i', 'ii'            , '<ESC>'                           , {}               
 map('i', 'Ii'            , '<ESC>'                           , {}                              )
 map('i', 'iI'            , '<ESC>'                           , {}                              )
 map('i', 'II'            , '<ESC>'                           , {}                              )
+
 -- Agrega una Separación en el Undo
 map('i', ','             , ',<C-g>u'                         , { noremap= true }               )
 map('i', '.'             , '.<C-g>u'                         , { noremap= true }               )
@@ -122,56 +143,57 @@ map('n', '<S-l>'         , ':vertical resize +2<CR>'         , { }              
 map('n', '<S-h>'         , ':vertical resize -2<CR>'         , { }                             )
 map('n', '<S-k>'         , ':res -2<CR>'                     , { }                             )
 map('n', '<S-j>'         , ':res +2<CR>'                     , { }                             )
--- Cambia el <S-j> a gj. Resuelve el conflicto
-map('n', '<leader>gj'    , ':join<CR>'                       , { silent= true }                )
-map('n', '<leader>g<S-j>', ':join!<CR>'                      , { silent= true }                )
-map('n', '<leader>gq'    , 'g~'                              , { silent= true }                )
 
+-- Maximiza y Restaurar una ventana
+map('n', '<leader>o'     , '<C-w>='                          , { silent= true, noremap= true } )
+map('n', '<leader>O'     , '<C-w>|<C-W>_'                    , { silent= true, noremap= true } )
+
+-- Junta y divide lineas
+map('n', 'Q'             , 'gq'                              , { }                             )
+map('n', '<leader>j'    , ':join<CR>'                        , { silent= true }                )
+map('n', '<leader><S-j>', ':join!<CR>'                       , { silent= true }                )
+map('v', '<leader>j'    , ':join<CR>'                        , { silent= true }                )
+map('v', '<leader><S-j>', ':join!<CR>'                       , { silent= true }                )
+
+-- DiffPut en varias lineas (Visual-Mode)
+map('v', 'Dp'           , ':diffput<CR>'                     , { silent= true, noremap= true } )
 
 -- Change between Capitalization
-map('', '<leader>m'     , 'gu'                              , { silent= true }                )
-map('', '<leader><S-m>' , 'gU'                              , { silent= true }                )
+map('', '<leader>m'     , 'gu'                               , { silent= true }                )
+map('', '<leader><S-m>' , 'gU'                               , { silent= true }                )
+map('', '<leader>gq'    , 'g~'                               , { silent= true }                )
 
 -- Aumenta o Disminuye el valor de un numero
-map('n', '++'            , '<C-a>'                           , { }                             )
-map('n', '--'            , '<C-x>'                           , { }                             )
-map('n', '**'            , 'g<C-a>'                          , { }                             )
-map('n', '__'            , 'g<C-x>'                          , { }                             )
-
--- Acomoda el texto de una linea en varias
-map('n', 'Q'             , 'gq'                              , { }                             )
+map('', '++'            , '<C-a>'                           , { }                             )
+map('', '--'            , '<C-x>'                           , { }                             )
+map('', '**'            , 'g<C-a>'                          , { }                             )
+map('', '__'            , 'g<C-x>'                          , { }                             )
 
 -- Atajo Sustituir
 map('n', 'S'             , ':%s//g<Left><Left>'              , { }                             )
+map('v', 'S'             , ':s//g<Left><Left>'              , { }                             )
+map('n', '<Leader>S'     , ':%s/\\<<C-r><C-w>\\>/<C-r><C-w>/gI<Left><Left><Left>' , { }        )
 
 -- Lista de Cambios en un Archivo
-map('n', '<leader>d'     , ':DiffSaved<CR>'                  , { }                             )
-map('n', '<leader><S-d>' , ":diffoff<CR>:q<CR>''"            , { }                             )
+map('n', '<F6>'          , ':DiffSaved<CR>'                  , { }                             )
+map('n', '<F7>'          , ":diffoff<CR>:q<CR>''"            , { }                             )
 
 -- Ordenado Random de Lineas
 map('v', 'rr'            , '!sort -R<CR>'                    , { }                             )
 
--- Para los teclados que no tienen < y >
-map('n', '<leader>j'     , ':lua Programar()<CR>'            , { silent= true }                )
-map('n', '<leader><S-j>' , ':lua DesProgramar()<CR>'         , { silent= true }                )
+-- Para los teclados que no tienen < y > los reprograma a çÇ
+map('n', '<leader>ç'     , ':lua Programar()<CR>'            , { silent= true }                )
 
 -- Compile
-map('n', '<leader>cc'    , ':lua Procesar("ejecutar")<CR>'    , { }                             )
-map('n', '<leader>c'     , ':lua Procesar("compilar")<CR>'     , { }                             )
+map('n', '<leader>cc'    , ':lua Procesar("ejecutar")<CR>'   , { }                             )
+map('n', '<leader>c'     , ':lua Procesar("compilar")<CR>'   , { }                             )
 
--- "" Tabs,  buffers and files
+-- Tabs,  buffers and files
 map('n', '<C-t><TAB>'    , 'gt'                              , { silent= true, noremap= true } )
 map('n', '<C-t><S-TAB>'  , 'gT'                              , { silent= true, noremap= true } )
 map('n', '<C-t>t'        , ':tabnew<CR>:NvimTreeToggle<CR>'  , { silent= true, noremap= true } )
 
-map('n', '<TAB>'         , ':bNext<CR>'        , { silent= true, noremap= true } )
-map('n', '<S-TAB>'       , ':bprevious<CR>'        , { silent= true, noremap= true } )
-map('n', '<S-t>'         , ':enew<CR>:NvimTreeToggle<CR>'    , { silent= true, noremap= true } )
-map('n', '<C-b><Right>'  , ':BufferLineMoveNext<CR>'         , { silent= true, noremap= true } )
-map('n', '<C-b><Left>'   , ':BufferLineMovePrev<CR>'         , { silent= true, noremap= true } )
-map('n', '<C-b>e'        , ':BufferLineSortByExtension<CR>'  , { silent= true, noremap= true } )
-map('n', '<C-b>d'        , ':BufferLineSortByDirectory<CR>'  , { silent= true, noremap= true } )
-
+-- Permite ingresar la ruta actual de la carpeta
 map('c', '<C-r>p'        , '<C-R>=expand("%:p:h") . "/" <CR>', { noremap= true }               )
 
 -- Modifica la posicion del cursor hacia la anterior o siguiente posición
@@ -191,63 +213,53 @@ map('v', '<S-j>'         , ":m '>+1<CR>gv=gv"                , { noremap= true }
 map('n', '<S-y>'         , 'y$'                              , { noremap= true }               )
 
 -- Clean search (highlight)
-map('n', '<leader><space>', ':noh<CR>'                       , { silent= true, noremap= true } )
+map('n', '<leader>,', ':noh<CR>'                             , { silent= true, noremap= true } )
 
 -- Vmap for maintain Visual Mode after shifting < and >
-map('v', '<'             , '<gv'                             , { }                             )
-map('v', '>'             , '>gv'                             , { }                             )
+map('v', '<'             , '<gv'                             , { }                             )
+map('v', '>'             , '>gv'                             , { }                             )
 -- Vmap for Shift and horizontal movement to do shifting < and >
-map('v', '<S-Right>'     , '>gv'                             , { }                             )
-map('v', '<S-Left>'      , '<gv'                             , { }                             )
-map('v', '<S-l>'         , '>gv'                             , { }                             )
-map('v', '<S-h>'         , '<gv'                             , { }                             )
+map('v', '<S-Right>'     , '>gv'                             , { }                             )
+map('v', '<S-Left>'      , '<gv'                             , { }                             )
+map('v', '<S-l>'         , '>gv'                             , { }                             )
+map('v', '<S-h>'         , '<gv'                             , { }                             )
 
--- Terminal en NVim
-map('n', '<leader>t'     , ':vsplit<CR>:term<CR>'            , { silent= true, noremap= true } )
-map('n', '<leader>T'     , ':split<CR>:term<CR>'             , { silent= true, noremap= true } )
-map('t', '<ESC>'         , '<C-\\><C-n>'                     , { noremap= true }               )
+-- Hace que pegar sobre una seleccion no reemplaze a lo que se borra
+map('v', '<leader>p'    , '"_dP'                             , { silent= true, noremap= true } )
+
+-- Marca de rojo los caracteres no ascii que pueden dar problemas en el código
+map('n', '<leader>i'    , ':syntax match nonascii "[^\\d0-\\d127]"<CR>:highlight nonascii guibg=DarkRed ctermbg=2<CR>' , { silent= true, noremap= true } )
+
+-- Surround ([{*"'` `'"*}]) --> En el registro 'z' guarda la info.
+map('v', 'ñ('    , '"zdi()<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñ)'    , '"zdi(  )<ESC>h"zP'                             , { silent= true, noremap= true } )
+map('v', 'ñ['    , '"zdi[]<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñ]'    , '"zdi[  ]<ESC>h"zP'                             , { silent= true, noremap= true } )
+map('v', 'ñ{'    , '"zdi{}<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñ}'    , '"zdi{  }<ESC>h"zP'                             , { silent= true, noremap= true } )
+map('v', 'ñ"'    , '"zdi""<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñ\''   , '"zdi\'\'<ESC>"zP'                             , { silent= true, noremap= true } )
+map('v', 'ñ`'    , '"zdi``<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñc'    , '"zdi``<ESC>"zP'                                , { silent= true, noremap= true } )
+map('v', 'ñ*'    , '"zdi**<ESC>"zP'                                , { silent= true, noremap= true } )
 
 -- "*****************************************************************************
 -- "" Mappings de los PLUGINS
 -- "*****************************************************************************
-
--- TagBar (Ctags)
-map('n', '<F8>'          , ':TagbarToggle<CR>'               , { silent= true }                )
-
--- EasyMotion
-map('n', '<leader>f'     , ' <Plug>(easymotion-s2)'          , { }                             )
-
--- Git
-map('n', '<leader>ga'    , ':Git write<CR>'                  , { noremap= true }               )
-map('n', '<leader>gc'    , ':Git commit --verbose<CR>'       , { noremap= true }               )
-map('n', '<leader>gp'    , ':Git push<CR>'                   , { noremap= true }               )
-map('n', '<leader>gl'    , ':Git pull<CR>'                   , { noremap= true }               )
-map('n', '<leader>gs'    , ':G<CR>'                          , { noremap= true }               )
-map('n', '<leader>gb'    , ':Git blame<CR>'                  , { noremap= true }               )
-map('n', '<leader>gd'    , ':Gvdiffsplit<CR>'                , { noremap= true }               )
 
 -- Startify
 map('n', '<leader>ks'    , ':SSave<CR>'                      , { noremap= true }               )
 map('n', '<leader>rs'    , ':SDelete<CR>'                    , { noremap= true }               )
 
 -- Snippets
-map('i', '{<CR>'         , '{<CR>}<ESC>O'                    , { noremap= true }               )
 map('i', '{;<CR>'        , '{<CR>};<ESC>O'                   , { noremap= true }               )
-
--- NvimTree
-map('n', '<F2>'         , ':NvimTreeFindFileToggle<CR>'      , { silent= true, noremap= true } )
-map('n', '<F3>'         , ':NvimTreeToggle<CR>'              , { silent= true, noremap= true } )
-
--- Telescope.nvim
-map('n', '<leader>rr'   , "<cmd>lua require('telescope.builtin').find_files()<cr>", { silent= true, noremap= true } )
-map('n', '<leader>r'    , "<cmd>lua require('telescope.builtin').live_grep()<cr>" , { silent= true, noremap= true } )
-map('n', '<leader>b'    , "<cmd>lua require('telescope.builtin').buffers()<cr>"   , { silent= true, noremap= true } )
-map('n', '<leader>y'    , ":lua require'telescope.builtin'.search_history{}<CR>"  , { noremap= true }               )
-map('n', '<leader>ht'   , "<cmd>lua require('telescope.builtin').help_tags()<cr>" , { silent= true, noremap= true } )
-map('n', '<leader>gr'   , ":Telescope lsp_references<cr>"                         , { silent= true, noremap= true } )
 
 -- LSP NVIM
 map('n', '<leader>e'    , '<cmd>lua vim.diagnostic.open_float()<CR>'              , { silent= true, noremap= true } )
-map('n', '-e'   , '<cmd>lua vim.diagnostic.goto_prev()<CR>'               , { silent= true, noremap= true } )
-map('n', '+e'   , '<cmd>lua vim.diagnostic.goto_next()<CR>'               , { silent= true, noremap= true } )
-map('n', '<leader>dd'   , '<cmd>Telescope diagnostics<CR>'                        , { silent= true, noremap= true } )
+map('n', '-e'           , '<cmd>lua vim.diagnostic.goto_prev()<CR>'               , { silent= true, noremap= true } )
+map('n', '+e'           , '<cmd>lua vim.diagnostic.goto_next()<CR>'               , { silent= true, noremap= true } )
+map('n', '<leader>dr'   , '<cmd>lua vim.lsp.buf.rename()<CR>'                     , { silent= true, noremap= true } )
+
+-- Terminal
+map('t', '<ESC>'        , '<C-\\><C-n>'                        , { noremap= true }               )
+map('t', 'ii'           , '<C-\\><C-n>'                        , { noremap= true }               )

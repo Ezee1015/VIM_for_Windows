@@ -17,7 +17,7 @@ end
 
 local Compile = {
     ['c'] = function()
-        exe("gcc '%' -o '%<'")
+        exe("gcc '%' -o '%<' -lm -g -Wall -Wextra")
     end,
 
     ['cpp'] = function()
@@ -25,7 +25,7 @@ local Compile = {
     end,
 
     ['java'] = function()
-        if(isfile("build.xml")) then
+        if(IsFile("build.xml")) then
           exe("ant compile")
         else
           exe("javac '%'")
@@ -41,8 +41,9 @@ local Compile = {
     end,
 
     ['markdown'] = function()
+        vim.cmd("MarkdownPreview")
+        -- exe("markdown '%' > '%<'.html")
         -- exe("pandoc '%' -o '%<'.pdf")
-        exe("markdown '%' > '%<'.html")
     end
 
 }
@@ -50,15 +51,19 @@ local Compile = {
 local CompileAndRun = {
     ['c'] = function()
         Procesar("compilar", 1)
-        exe("'%<'", 1)
+        exe("'"..vim.fn.expand('%:p:r').."'", 1)
     end,
 
     ['cpp'] = function()
         Procesar("compilar", 1)
-        exe("'%<'", 1)
+        exe("'"..vim.fn.expand('%:p:r').."'", 1)
     end,
 
     ['lua'] = function()
+        vim.cmd "so %"
+    end,
+
+    ['vim'] = function()
         vim.cmd "so %"
     end,
 
@@ -68,8 +73,8 @@ local CompileAndRun = {
     end,
 
     ['java'] = function()
-        if(isfile("build.xml")) then
-          exe("ant run")
+        if(IsFile("build.xml")) then
+          exe("ant run",1)
         else
           Procesar("compilar", 1)
           exe("java '%<'", 1)
@@ -89,9 +94,11 @@ local CompileAndRun = {
     end,
 
     ['html'] = function()
-        exe("chromium '%' &")
-        exe("firefox '%'")
-        exe("firefox-esr '%'")
+        -- exe("chromium '%' &")
+        -- exe("firefox '%'")
+        -- exe("firefox-esr '%'")
+        exe("open '%'")
+        exe("xdg-open '%'")
     end,
 
     ['tex'] = function()
@@ -109,8 +116,6 @@ local CompileAndRun = {
 
     ['markdown'] = function()
         Procesar("compilar", 1)
-        -- exe("xdg-open '%<'.pdf")
-        exe("%<.html")
     end,
   }
 
