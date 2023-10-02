@@ -20,3 +20,5 @@ SET LOG=".\%~N0_runtime.log"
 cscript //nologo .\!cSctVBS!
 DEL !cSctVBS! /f /q
 )1>>!LOG! 2>>&1
+
+msg * "Ya se terminó de instalar. Ejecute Neovim desde el Escritorio"
