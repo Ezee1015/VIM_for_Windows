@@ -20,10 +20,39 @@ function M.report_error(msg, ...)
   vim.fn['health#report_error'](msg, ...)
 end
 
+function M.start(msg)
+  M.report_start(msg)
+end
+function M.info(msg)
+  M.report_info(msg)
+end
+function M.ok(msg)
+  M.report_ok(msg)
+end
+function M.warn(msg, ...)
+  M.report_warn(msg, ...)
+end
+function M.error(msg, ...)
+  M.report_error(msg, ...)
+end
+
 local path2name = function(path)
   if path:match('%.lua$') then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
-    return path:gsub('.-lua[%\\%/]', '', 1):gsub('[%\\%/]', '.'):gsub('%.health.-$', '')
+
+    -- Get full path, make sure all slashes are '/'
+    path = vim.fs.normalize(path)
+
+    -- Remove everything up to the last /lua/ folder
+    path = path:gsub('^.*/lua/', '')
+
+    -- Remove the filename (health.lua)
+    path = vim.fn.fnamemodify(path, ':h')
+
+    -- Change slashes to dots
+    path = path:gsub('/', '.')
+
+    return path
   else
     -- Vim: transform "../autoload/health/provider.vim" into "provider"
     return vim.fn.fnamemodify(path, ':t:r')

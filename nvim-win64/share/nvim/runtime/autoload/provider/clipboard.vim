@@ -25,7 +25,8 @@ function! s:selection.on_exit(jobid, data, event) abort
   if self.owner == a:jobid
     let self.owner = 0
   endif
-  if a:data != 0
+  " Don't print if exit code is >= 128 ( exit is 128+SIGNUM if by signal (e.g. 143 on SIGTERM))
+  if a:data > 0 && a:data < 128
     echohl WarningMsg
     echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(self.stderr)
     echohl None
@@ -97,18 +98,24 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
-  elseif !empty($DISPLAY) && executable('xclip')
-    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
-    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
-    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
-    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
-    return 'xclip'
+  elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
+    let s:copy['+'] = ['waycopy', '-t', 'text/plain']
+    let s:paste['+'] = ['waypaste', '-t', 'text/plain']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'wayclip'
   elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
     let s:paste['+'] = ['xsel', '-o', '-b']
     let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
     let s:paste['*'] = ['xsel', '-o', '-p']
     return 'xsel'
+  elseif !empty($DISPLAY) && executable('xclip')
+    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
+    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
+    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
+    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
+    return 'xclip'
   elseif executable('lemonade')
     let s:copy['+'] = ['lemonade', 'copy']
     let s:paste['+'] = ['lemonade', 'paste']
@@ -139,7 +146,12 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:paste['+']
     return 'termux-clipboard'
   elseif !empty($TMUX) && executable('tmux')
-    let s:copy['+'] = ['tmux', 'load-buffer', '-']
+    let tmux_v = v:lua.vim.version.parse(system(['tmux', '-V']))
+    if !empty(tmux_v) && !v:lua.vim.version.lt(tmux_v, [3,2,0])
+      let s:copy['+'] = ['tmux', 'load-buffer', '-w', '-']
+    else
+      let s:copy['+'] = ['tmux', 'load-buffer', '-']
+    endif
     let s:paste['+'] = ['tmux', 'save-buffer', '-']
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']

@@ -18,7 +18,12 @@ endfunction
 
 " Close the GUI
 function! GuiClose() abort
-  call rpcnotify(0, 'Gui', 'Close')
+  call rpcnotify(0, 'Gui', 'Close', v:exiting)
+endfunction
+
+" Open new window
+function! GuiNewWindow(args) abort
+  call rpcnotify(0, 'Gui', 'NewWindow', a:args)
 endfunction
 
 " Notify the GUI when exiting Neovim
@@ -40,6 +45,11 @@ endfunction
 " Set fullscreen state for GUI window (1 is enabled, 0 disabled)
 function! GuiWindowFullScreen(enabled) abort
   call rpcnotify(0, 'Gui', 'WindowFullScreen', a:enabled)
+endfunction
+
+" Set frameless state for GUI window (1 is enabled, 0 disabled)
+function! GuiWindowFrameless(enabled) abort
+  call rpcnotify(0, 'Gui', 'WindowFrameless', a:enabled)
 endfunction
 
 " Set GUI font
@@ -232,3 +242,39 @@ function! s:GuiScrollBar(enable) abort
 endfunction
 
 command! -nargs=1 GuiScrollBar call s:GuiScrollBar(<args>)
+
+" Use Neovim theming for Qt Widgets
+function! s:GuiAdaptiveColor(enable) abort
+	call rpcnotify(0, 'Gui', 'AdaptiveColor', a:enable)
+endfunction
+command! -nargs=1 GuiAdaptiveColor call s:GuiAdaptiveColor(<args>)
+
+" Use Neovim font for Qt Widgets
+function! s:GuiAdaptiveFont(enable) abort
+	call rpcnotify(0, 'Gui', 'AdaptiveFont', a:enable)
+endfunction
+command! -nargs=1 GuiAdaptiveFont call s:GuiAdaptiveFont(<args>)
+
+" Override default Qt Style using QStyleFactory
+function! s:GuiAdaptiveStyle(styleName, ...) abort
+	call rpcnotify(0, 'Gui', 'AdaptiveStyle', a:styleName)
+endfunction
+command! -nargs=? GuiAdaptiveStyle call s:GuiAdaptiveStyle("<args>")
+
+" Print a list of available Qt Styles
+function! s:GuiAdaptiveStyleList() abort
+	call rpcnotify(0, 'Gui', 'AdaptiveStyleList')
+endfunction
+command! -nargs=0 GuiAdaptiveStyleList call s:GuiAdaptiveStyleList()
+
+" Change rendering logic to use ligature-compatible rendering scheme
+function! s:GuiRenderLigatures(enable) abort
+	call rpcnotify(0, 'Gui', 'Option', 'RenderLigatures', a:enable)
+endfunction
+command! -nargs=1 GuiRenderLigatures call s:GuiRenderLigatures(<args>)
+
+" Set window transparency, forwards to Qt setWindowOpacity
+function! s:GuiWindowOpacityCommand(value) abort
+  call rpcnotify(0, 'Gui', 'WindowOpacity', a:value)
+endfunction
+command! -nargs=1 GuiWindowOpacity call s:GuiWindowOpacityCommand("<args>")
